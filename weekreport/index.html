@@ -1,0 +1,226 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<META HTTP-EQUIV="pragma" CONTENT="no-cache" />
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate" />
+<META HTTP-EQUIV="expires" CONTENT="0" />
+<script type="text/javascript" src="lib/js/jquery-1.12.2.min.js"></script>
+<script type="text/javascript" src="lib/js/jquery.base64.js"></script>
+<title>哇哈哈哈</title>
+</head>
+<body>
+	<div>
+		<h1>三方支付项目组-周报填写小程序</h1>
+		<h2>hi，各位小伙伴，求不要测试本程序，好好写字，好好写字，只能提交一次，只能提交一次，只能提交一次，以第一次结果为准。</h2>
+		<div >
+			<input type="image" src="lib/img/timg.jpg">
+		</div
+		<div >
+			<label style="color:red">选个名字先，要不然不知道是谁</label>
+			<select id="staffName" style="width:200px">
+				<option value="0">请选择</option>
+			<select/>
+			<label style="color:green">本周开始日期:</label>
+			<span id="startdateofthisweek"></span>
+			<input id="submitreport" type="button" style="height:50px" value="提交本周周报"/>
+		<div>
+		
+		<h3>本周工作安排</h3>
+		<table id="thisweektable">
+			<tr>
+				<th >序号</th>
+				<th>工作内容</th>
+				<th>存在风险</th>
+				<th>解决建议</th>
+			</tr>
+			
+		</table>
+		<h3>下周工作计划</h3>
+		<table id="nextweektable"  >
+			<tr>
+				<th>序号</th>
+				<th>工作内容</th>
+				<th>存在风险</th>
+				<th>解决建议</th>
+			</tr>
+		</table>
+		<br>
+		
+	</div>
+</body>
+
+
+<script type="text/javascript">
+
+
+	var formatDate = function(date) {
+		var myyear = date.getFullYear();
+		var mymonth = date.getMonth()+1;
+		var myweekday = date.getDate();
+
+		if(mymonth < 10){
+			mymonth = "0" + mymonth;	
+		}
+		if(myweekday < 10){
+			myweekday = "0" + myweekday;
+		}
+		
+		return (myyear+"-"+mymonth + "-" + myweekday);
+	};
+
+	var showStartdateofthisweek = function(){
+		
+		var thisdate = new Date();
+		var year=thisdate.getFullYear();
+		var month=thisdate.getMonth();
+		var nowDayOfWeek = thisdate.getDay()-1; 
+		
+		var nowDay = thisdate.getDate(); 
+		
+		var weekStartDate = new Date(year, month, nowDay - nowDayOfWeek);
+		return formatDate(weekStartDate);
+	
+	};
+
+	$(document).ready(function(){
+	
+		var startdate = showStartdateofthisweek();
+		$("#startdateofthisweek").text(startdate);
+	
+		$.ajax({
+			url:'/mainweekreport/getstaffname.do',
+			type:'GET', 
+			async:true, 
+			dataType:'json',   
+			success:function(data){
+				
+				$.each(data,function(key,item){
+				
+					$("#staffName").append("<option value="+key+">"+item+"</option>");
+				});
+				
+				
+			},
+			error:function(){
+			
+				alert("找名字的时候出错了");
+			},
+			
+		});
+	
+		for (var i=0;i<5;i++){
+			$("#thisweektable").append("<tr>"+
+			"<td>"+(i+1)+"</td>"+
+			"<td><input style='width:400px' id='thisweek_content_0'"+(i+1)+" name='thisweek_content_0'"+(i+1)+" type='text'/></td>"+
+			"<td><input  id='thisweek_risk_0'"+(i+1)+" name='thisweek_risk_0'"+(i+1)+" type='text' value='暂无'/></td>"+
+			"<td><input  id='thisweek_advice_0'"+(i+1)+" name='thisweek_advice_0'"+(i+1)+" type='text' value='暂无'/></td>"+
+			+"</tr>");
+		}
+		
+		for (var i=0;i<5;i++){
+			$("#nextweektable").append("<tr>"+
+			"<td>"+(i+1)+"</td>"+
+			"<td><input style='width:400px' id='nextweek_content_0'"+(i+1)+" name='nextweek_content_0'"+(i+1)+" type='text'/></td>"+
+			"<td><input  id='nextweek_risk_0'"+(i+1)+" name='nextweek_risk_0'"+(i+1)+" type='text' value='暂无'/></td>"+
+			"<td><input  id='nextweek_advice_0'"+(i+1)+" name='nextweek_advice_0'"+(i+1)+" type='text' value='暂无'/></td>"+
+			+"</tr>");
+		}
+	
+		var getStrByUsrvalue = function(pattern){
+
+			var contentlist  = $("input[name^='"+pattern+"']");
+			var str='';
+			$.each(contentlist,function(key,item){
+				str+=$.base64.encode(encodeURIComponent(item.value))+",";
+			});
+			return str;
+		};
+		
+		
+	
+		$("#submitreport").bind("click",function(){
+		
+			var name = $("#staffName option:selected").val();
+			var realname = $("#staffName option:selected").text();
+			if (name==0) {
+				alert("咱能先选个名字么？");
+				return ;
+			}
+			
+			var thisweekcontentlist  = $("input[name^='thisweek_content']");
+			var str='';
+			var flag = false;
+			$.each(thisweekcontentlist,function(key,item){
+				if(!$.trim(item.value)==''){
+					flag=true;
+				}
+			});
+			
+			if(!flag){
+				alert("hi,你本周一件事情都没做，这样合适么？");
+				return ;
+			}
+			
+			
+			var nextweekcontentlist  = $("input[name^='nextweek_content']");
+			var str='';
+			var flag = false;
+			$.each(nextweekcontentlist,function(key,item){
+				if(!$.trim(item.value)==''){
+					flag=true;
+				}
+			});
+			
+			if(!flag){
+				alert("hi,你确定你下周是放假，放整整五天假，你年假够么？");
+				return ;
+			}
+			
+			
+		
+			var thisweekcontentstr =  getStrByUsrvalue('thisweek_content');
+			var thisweekriskstr =  getStrByUsrvalue('thisweek_risk');
+			var thisweekadvicestr =  getStrByUsrvalue('thisweek_advice');
+			var nextweekcontentstr =  getStrByUsrvalue('nextweek_content');
+			var nextweekriskstr =  getStrByUsrvalue('nextweek_risk');
+			var nextweekadvicestr =  getStrByUsrvalue('nextweek_advice');
+			
+			$.ajax({
+			url:'/mainweekreport/submitweekreport.do',
+			type:'post', 
+			async:true, 
+			dataType:'json', 
+			contentType: "application/json",			
+			data:{
+				"name":name,
+				"startdateofthisweek":startdate,
+				"thisweekcontent":thisweekcontentstr,
+				"thisweekrisk":thisweekriskstr,
+				"thisweekadvice":thisweekadvicestr,
+				"nextweekcontent":nextweekcontentstr,
+				"nextweekrisk":nextweekriskstr,
+				"nextweekadvice":nextweekadvicestr
+			},
+			success:function(data){
+				
+				if(data.result=="repeat"){
+					alert("hi,"+realname+"小朋友，都说了不要多次提交，歧视我不会判断么？");
+				}else{
+					alert("多谢"+realname+"小朋友，你离周五下班又近了一步，离周末又进了两步，离下周上班也进了三步，恭喜恭喜！");
+				}
+				
+				
+			},
+			error:function(){
+			
+				alert("提交周报时出错了");
+			},
+			
+		});
+			
+		});
+	
+	});
+</script>
+</html>
